@@ -21,7 +21,7 @@ interface Produto {
   quantidadeEstoque: string;
 }
 
-export default function Home() {
+export default function Produto() {
   const [produto, setProduto] = useState<Produto[]>([]);
 
   useEffect(() => {
