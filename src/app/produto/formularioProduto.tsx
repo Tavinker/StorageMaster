@@ -1,21 +1,20 @@
-"use client";
-//importações
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { toast } from "@/components/ui/use-toast";
+import { redirect, useRouter } from "next/navigation";
+import Produto from "./page";
 import {
   Select,
   SelectContent,
@@ -23,10 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { fornecedores } from "@prisma/client";
 import { useEffect, useState } from "react";
 
-//validação de formulário (tipagem de dados)
 const formSchema = z.object({
   nomeProduto: z.string().min(2, {
     message: "Username must be at least 2 characters.",
@@ -36,58 +33,71 @@ const formSchema = z.object({
   quantidadeEstoque: z.string(),
   fornecedoresId: z.string(),
 });
+interface FormProdutoProps {
+  produto?: Produto; // Adicione a interface para produto
+}
 
 interface Fornecedor {
   id: number;
   nomeFornecedor: string;
 }
 
-//formulario
-export function ProfileForm() {
-  // ...
-
+export function FormProduto({ produto }: FormProdutoProps) {
+  const router = useRouter();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      preco: "",
-      descricao: "",
-      quantidadeEstoque: "",
-      nomeProduto: "",
+      nomeProduto: produto ? produto.nomeProduto : "",
+      preco: produto ? produto.preco : "",
+      descricao: produto ? produto.descricao : "",
+      quantidadeEstoque: produto ? produto.quantidadeEstoque : "",
+      fornecedoresId: produto ? produto.fornecedoresId : "",
+      // Preencha os valores se produto existe
     },
   });
-
-  const [fornecedor, setFornecedor] = useState<Fornecedor[]>([]);
+  const [fornecedorData, setFornecedorData] = useState<Fornecedor[]>([]);
 
   useEffect(() => {
     axios
       .get<Fornecedor[]>("/api/fornecedor")
       .then((res) => {
-        setFornecedor(res.data);
+        setFornecedorData(res.data);
       })
       .catch((error) => {
         console.error("Erro ao obter dados da API:", error);
       });
   }, []);
-  console.log(fornecedor);
 
-  // 2. Define a submit handler.
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-
-    const jsonData = {
-      nomeProduto: values.nomeProduto,
-      preco: values.preco,
-      descricao: values.descricao,
-      quantidadeEstoque: values.quantidadeEstoque,
-      fornecedoresId: Number(values.fornecedoresId),
-    };
-    console.log(jsonData);
-    axios({
-      url: "/api/produto",
-      method: "POST",
-      data: jsonData,
-    });
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      if (produto) {
+        // Se produto existe, atualize em vez de adicionar
+        await axios.put(`/api/produto/`, {
+          id: produto.id,
+          nomeProduto: values.nomeProduto,
+          preco: values.preco,
+          descricao: values.descricao,
+          quantidadeEstoque: values.quantidadeEstoque,
+          fornecedoresId: values.fornecedoresId,
+        });
+      } else {
+        // Caso contrário, adicione um novo produto
+        await axios.post("/api/produto", values);
+      }
+      toast({
+        title: "Produto salvo com sucesso!",
+        description: "O produto foi salvo com sucesso!",
+        variant: "success",
+      });
+      window.location.reload(); // Use router.reload() para recarregar a página
+    } catch (error) {
+      console.error("Erro ao salvar produto:", error);
+      toast({
+        title: "Não foi possível salvar o produto =(",
+        description: "Houve algum erro ao salvar o produto",
+        variant: "destructive",
+      });
+    }
   }
 
   return (
@@ -161,7 +171,7 @@ export function ProfileForm() {
           name="fornecedoresId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Descrição</FormLabel>
+              <FormLabel>Fornecedor</FormLabel>
               <FormControl>
                 <Select
                   onValueChange={field.onChange}
@@ -171,12 +181,16 @@ export function ProfileForm() {
                     <SelectValue placeholder="Fornecedores" />
                   </SelectTrigger>
                   <SelectContent>
-                    {fornecedor.map((fornecedor) => (
+                    {fornecedorData.map((fornecedorItem) => (
+                      // <SelectItem value={field.value}>{field.value}</SelectItem>
                       <SelectItem
-                        key={fornecedor.id}
-                        value={String(fornecedor.id)}
+                        key={fornecedorItem.id}
+                        value={
+                          String(fornecedorItem.id)
+                          // produto ? field.value : String(fornecedorItem.id)
+                        }
                       >
-                        {fornecedor.nomeFornecedor}
+                        {fornecedorItem.nomeFornecedor}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -188,7 +202,7 @@ export function ProfileForm() {
         />
 
         <Button className="w-full" type="submit">
-          Adicionar Produto
+          {produto ? "Salvar Alterações" : "Adicionar Produto"}
         </Button>
       </form>
     </Form>

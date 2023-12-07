@@ -30,7 +30,7 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
         <AlertDialogHeader>
           <AlertDialogTitle>Tem certeza que deseja excluir?</AlertDialogTitle>
           <AlertDialogDescription>
-            Essa ação não poderá ser desfeita. Uma vez que o fornecedor for
+            Essa ação não poderá ser desfeita. Uma vez que o produto for
             excluído, você não poderá mais recupera-lo.
           </AlertDialogDescription>
         </AlertDialogHeader>
