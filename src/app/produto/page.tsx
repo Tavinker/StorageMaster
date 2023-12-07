@@ -12,21 +12,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import axios from "axios";
+import numeral from "numeral";
 
-interface Produto {
-  id: number;
-  nomeProduto: string;
-  preco: string;
-  descricao: string;
-  quantidadeEstoque: string;
-}
+// Função para formatar o preço em reais
+// const formatarPreco = (preco: number): string => {
+//   return `R$ ${numeral(preco).format("0,0.00")}`;
+// };
 
 export default function Produto() {
-  const [produto, setProduto] = useState<Produto[]>([]);
+  const [produto, setProduto] = useState([]);
 
   useEffect(() => {
     axios
-      .get<Produto[]>("/api/produto")
+      .get("/api/produto")
       .then((res) => {
         setProduto(res.data);
       })
@@ -45,22 +43,31 @@ export default function Produto() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Produto</TableHead>
-              <TableHead>Preço</TableHead>
-              <TableHead>Descrição</TableHead>
-              <TableHead className="text-right">Quantidade</TableHead>
+              <TableHead className="text-center">Produto</TableHead>
+              <TableHead className="text-center">Preço</TableHead>
+              <TableHead className="text-center">Descrição</TableHead>
+              <TableHead className="text-center">Quantidade</TableHead>
+              <TableHead className="text-center">Fornecedor</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {produto.map((produto) => (
+            {produto.map((produto: any) => (
               <TableRow key={produto.id}>
-                <TableCell className="font-medium">
+                <TableCell className="font-medium text-center">
                   {produto.nomeProduto}
                 </TableCell>
-                <TableCell>{produto.preco}</TableCell>
-                <TableCell>{produto.descricao}</TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-center">
+                  {/* {formatarPreco(parseFloat(Number(produto.preco, 10)))} */}
+                  R$ {produto.preco}
+                </TableCell>
+                <TableCell className="text-center">
+                  {produto.descricao}
+                </TableCell>
+                <TableCell className="text-center">
                   {produto.quantidadeEstoque}
+                </TableCell>
+                <TableCell className="text-center">
+                  {produto.fornecedor.nomeFornecedor}
                 </TableCell>
               </TableRow>
             ))}

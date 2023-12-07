@@ -25,7 +25,11 @@ export async function POST(request: Request) {
 }
 export async function GET(request: Request) {
   try {
-    const produtos = await db.produtos.findMany();
+    const produtos = await db.produtos.findMany({
+      include: {
+        fornecedor: true,
+      },
+    });
     return new Response(JSON.stringify(produtos), { status: 200 });
   } catch (error) {
     console.log(error);
